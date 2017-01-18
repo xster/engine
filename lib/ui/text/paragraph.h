@@ -34,7 +34,6 @@ class Paragraph : public ftl::RefCountedThreadSafe<Paragraph>,
   double maxIntrinsicWidth();
   double alphabeticBaseline();
   double ideographicBaseline();
-  bool didExceedMaxLines();
 
   void layout(double width);
   void paint(Canvas* canvas, double x, double y);
