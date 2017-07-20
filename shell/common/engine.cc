@@ -276,6 +276,8 @@ tonic::DartErrorHandleType Engine::GetLoadScriptError() {
 }
 
 void Engine::OnOutputSurfaceCreated(const ftl::Closure& gpu_continuation) {
+  FTL_DLOG(ERROR) << "OnOutputSurfaceCreated";
+  TRACE_EVENT0("flutter", "got surface");
   blink::Threads::Gpu()->PostTask(gpu_continuation);
   have_surface_ = true;
   StartAnimatorIfPossible();
@@ -284,6 +286,8 @@ void Engine::OnOutputSurfaceCreated(const ftl::Closure& gpu_continuation) {
 }
 
 void Engine::OnOutputSurfaceDestroyed(const ftl::Closure& gpu_continuation) {
+  FTL_DLOG(ERROR) << "OnOutputSurfaceDestroyed";
+  TRACE_EVENT0("flutter", "lost surface");
   have_surface_ = false;
   StopAnimator();
   blink::Threads::Gpu()->PostTask(gpu_continuation);
@@ -318,12 +322,13 @@ void Engine::DispatchPlatformMessage(
 bool Engine::HandleLifecyclePlatformMessage(blink::PlatformMessage* message) {
   const auto& data = message->data();
   std::string state(reinterpret_cast<const char*>(data.data()), data.size());
+  TRACE_EVENT0("flutter", state.c_str());
   if (state == "AppLifecycleState.paused" ||
       state == "AppLifecycleState.suspending") {
     activity_running_ = false;
     StopAnimator();
-  } else if (state == "AppLifecycleState.resumed" ||
-             state == "AppLifecycleState.inactive") {
+  } else if (state == "AppLifecycleState.resumed") { //||
+            //  state == "AppLifecycleState.inactive") {
     activity_running_ = true;
     StartAnimatorIfPossible();
   }

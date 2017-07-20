@@ -9,6 +9,7 @@
 #include "flutter/common/threads.h"
 #include "flutter/fml/platform/darwin/scoped_block.h"
 #include "flutter/fml/platform/darwin/scoped_nsobject.h"
+#include "flutter/glue/trace_event.h"
 #include "flutter/shell/platform/darwin/common/buffer_conversions.h"
 #include "flutter/shell/platform/darwin/common/platform_mac.h"
 #include "flutter/shell/platform/darwin/ios/framework/Headers/FlutterCodecs.h"
@@ -20,6 +21,7 @@
 #include "flutter/shell/platform/darwin/ios/framework/Source/flutter_touch_mapper.h"
 #include "flutter/shell/platform/darwin/ios/platform_view_ios.h"
 #include "lib/ftl/functional/make_copyable.h"
+#include "lib/ftl/logging.h"
 #include "lib/ftl/time/time_delta.h"
 
 namespace {
@@ -277,11 +279,15 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
 #pragma mark - UIViewController lifecycle notifications
 
 - (void)viewWillAppear:(BOOL)animated {
+  FTL_DLOG(ERROR) << "viewWillAppear";
+  TRACE_EVENT0("flutter", "VC:view will appear");
   [self connectToEngineAndLoad];
   [super viewWillAppear:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
+  FTL_DLOG(ERROR) << "viewDidDisappear";
+  TRACE_EVENT0("flutter", "VC:view did disappear");
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.paused"];
 
   [super viewDidDisappear:animated];
@@ -290,18 +296,26 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
 #pragma mark - Application lifecycle notifications
 
 - (void)applicationBecameActive:(NSNotification*)notification {
+  FTL_DLOG(ERROR) << "applicationBecameActive";
+  TRACE_EVENT_INSTANT0("flutter", "AD:app became active");
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.resumed"];
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
+  FTL_DLOG(ERROR) << "applicationWillResignActive";
+  TRACE_EVENT_INSTANT0("flutter", "AD:app will resign active");
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.inactive"];
 }
 
 - (void)applicationDidEnterBackground:(NSNotification*)notification {
+  FTL_DLOG(ERROR) << "applicationDidEnterBackground";
+  TRACE_EVENT_INSTANT0("flutter", "AD:app did enter background");
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.paused"];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification*)notification {
+  FTL_DLOG(ERROR) << "applicationWillEnterForeground";
+  TRACE_EVENT_INSTANT0("flutter", "AD:app will enter foreground");
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.inactive"];
 }
 
@@ -539,6 +553,7 @@ static inline PointerChangeMapperPhase PointerChangePhaseFromUITouchPhase(UITouc
 }
 
 - (void)viewDidAppear:(BOOL)animated {
+  TRACE_EVENT0("flutter", "VC:view did appear");
   [self surfaceUpdated:YES];
   [self onLocaleUpdated:nil];
   [self onVoiceOverChanged:nil];
@@ -548,6 +563,7 @@ static inline PointerChangeMapperPhase PointerChangePhaseFromUITouchPhase(UITouc
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
+  TRACE_EVENT0("flutter", "VC:view will disappear");
   [self surfaceUpdated:NO];
 
   [super viewWillDisappear:animated];
