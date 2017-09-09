@@ -24,6 +24,7 @@ static const size_t kGrCacheMaxByteSize = 512 * (1 << 20);
 
 GPUSurfaceGL::GPUSurfaceGL(GPUSurfaceGLDelegate* delegate)
     : delegate_(delegate), weak_factory_(this) {
+  FTL_LOG(ERROR) << "========================= GPUSurfaceGL::GPUSurfaceGL";
   if (!delegate_->GLContextMakeCurrent()) {
     FTL_LOG(ERROR)
         << "Could not make the context current to setup the gr context.";
