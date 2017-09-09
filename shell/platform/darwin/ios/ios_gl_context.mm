@@ -29,6 +29,7 @@ IOSGLContext::IOSGLContext(PlatformView::SurfaceConfig config, CAEAGLLayer* laye
       storage_size_width_(0),
       storage_size_height_(0),
       valid_(false) {
+  FTL_LOG(ERROR) << "========================= IOSGLContext::IOSGLContext";
   VERIFY(layer_ != nullptr);
   VERIFY(context_ != nullptr);
   VERIFY(resource_context_ != nullptr);
@@ -132,6 +133,7 @@ IOSGLContext::IOSGLContext(PlatformView::SurfaceConfig config, CAEAGLLayer* laye
   };
 
   valid_ = true;
+  FTL_LOG(ERROR) << "========================= IOSGLContext::IOSGLContext done and valid";
 }
 
 IOSGLContext::~IOSGLContext() {
@@ -164,10 +166,14 @@ bool IOSGLContext::PresentRenderBuffer() const {
 }
 
 bool IOSGLContext::UpdateStorageSizeIfNecessary() {
+  FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary()";
   const CGSize layer_size = [layer_.get() bounds].size;
 
   const GLint size_width = layer_size.width;
   const GLint size_height = layer_size.height;
+
+  FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() layer size"
+                 << size_width << size_height;
 
   if (size_width == storage_size_width_ && size_height == storage_size_height_) {
     // Nothing to since the stoage size is already consistent with the layer.
@@ -175,6 +181,7 @@ bool IOSGLContext::UpdateStorageSizeIfNecessary() {
   }
 
   if (![EAGLContext setCurrentContext:context_]) {
+    FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() FAIL ![EAGLContext setCurrentContext:context_]";
     return false;
   }
 
@@ -186,6 +193,7 @@ bool IOSGLContext::UpdateStorageSizeIfNecessary() {
   FXL_DCHECK(glGetError() == GL_NO_ERROR);
 
   if (![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]) {
+    FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() FAIL ![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]";
     return false;
   }
 

@@ -88,9 +88,11 @@ void PlatformView::NotifyCreated(std::unique_ptr<Surface> surface,
       caller_continuation,           //
       &latch
     ]() mutable {
+      FTL_DLOG(ERROR) << "========================= rasterizer_->Setup";
       // Runs on the GPU Thread. So does the Caller Continuation.
       rasterizer_->Setup(std::move(surface), caller_continuation, &latch);
     });
+    FTL_DLOG(ERROR) << "========================= engine_->OnOutputSurfaceCreated";
     // Runs on the UI Thread.
     engine_->OnOutputSurfaceCreated(std::move(gpu_continuation));
   });
@@ -102,6 +104,7 @@ void PlatformView::NotifyCreated(std::unique_ptr<Surface> surface,
 }
 
 void PlatformView::NotifyDestroyed() {
+  FTL_DLOG(ERROR) << "========================= PlatformView::NotifyDestroyed()";
   fxl::AutoResetWaitableEvent latch;
 
   auto engine_continuation = [this, &latch]() {
