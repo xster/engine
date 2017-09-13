@@ -15,7 +15,6 @@ IOSSurfaceGL::IOSSurfaceGL(PlatformView::SurfaceConfig surface_config, CAEAGLLay
 IOSSurfaceGL::~IOSSurfaceGL() = default;
 
 bool IOSSurfaceGL::IsValid() const {
-  FTL_LOG(ERROR) << "========================= IOSSurfaceGL::IsValid() " << context_.IsValid();
   return context_.IsValid();
 }
 

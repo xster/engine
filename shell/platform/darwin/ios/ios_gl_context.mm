@@ -166,7 +166,6 @@ bool IOSGLContext::PresentRenderBuffer() const {
 }
 
 bool IOSGLContext::UpdateStorageSizeIfNecessary() {
-  FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary()";
   const CGSize layer_size = [layer_.get() bounds].size;
 
   const GLint size_width = layer_size.width;
@@ -197,11 +196,10 @@ bool IOSGLContext::UpdateStorageSizeIfNecessary() {
 
   if (![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]) {!
     FXL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() FAIL ![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]";
-    FXL_LOG(ERROR) << "fail " << eglGetError();
+    // FXL_LOG(ERROR) << "fail " << gluErrorString;
     return false;
   }
 
-  FXL_LOG(ERROR) << "no fail" << eglGetError();
   GLint width = 0;
   GLint height = 0;
   bool rebind_color_buffer = false;
@@ -211,9 +209,11 @@ bool IOSGLContext::UpdateStorageSizeIfNecessary() {
     // Fetch the dimensions of the color buffer whose backing was just updated
     // so that backing of the attachments can be updated
     glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width);
+    FXL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() width now " << width;
     FXL_DCHECK(glGetError() == GL_NO_ERROR);
 
     glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height);
+    FXL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() height now " << height;
     FXL_DCHECK(glGetError() == GL_NO_ERROR);
 
     rebind_color_buffer = true;
