@@ -15,7 +15,6 @@ IOSSurfaceGL::IOSSurfaceGL(PlatformView::SurfaceConfig surface_config, CAEAGLLay
 IOSSurfaceGL::~IOSSurfaceGL() = default;
 
 bool IOSSurfaceGL::IsValid() const {
-  FTL_LOG(ERROR) << "========================= IOSSurfaceGL::IsValid() " << context_.IsValid();
   return context_.IsValid();
 }
 
@@ -30,7 +29,7 @@ void IOSSurfaceGL::UpdateStorageSizeIfNecessary() {
 }
 
 std::unique_ptr<Surface> IOSSurfaceGL::CreateGPUSurface() {
-  FTL_LOG(ERROR) << "========================= IOSSurfaceGL::CreateGPUSurface()";
+  FXL_LOG(ERROR) << "========================= IOSSurfaceGL::CreateGPUSurface()";
   return std::make_unique<GPUSurfaceGL>(this);
 }
 
@@ -43,7 +42,7 @@ bool IOSSurfaceGL::SurfaceSupportsSRGB() const {
 }
 
 bool IOSSurfaceGL::GLContextMakeCurrent() {
-  FTL_LOG(ERROR) << "========================= IOSSurfaceGL::GLContextMakeCurrent()";
+  FXL_LOG(ERROR) << "========================= IOSSurfaceGL::GLContextMakeCurrent()";
   return IsValid() ? context_.MakeCurrent() : false;
 }
 

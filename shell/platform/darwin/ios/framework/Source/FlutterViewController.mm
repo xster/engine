@@ -377,12 +377,14 @@ class PlatformMessageResponseDarwin : public blink::PlatformMessageResponse {
 }
 
 - (void)applicationDidEnterBackground:(NSNotification*)notification {
+  FXL_LOG(ERROR) << "========================= applicationDidEnterBackground";
   TRACE_EVENT0("flutter", "applicationDidEnterBackground");
   [self surfaceUpdated:NO];
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.paused"];
 }
 
 - (void)applicationWillEnterForeground:(NSNotification*)notification {
+  FXL_LOG(ERROR) << "========================= applicationWillEnterForeground";
   TRACE_EVENT0("flutter", "applicationWillEnterForeground");
   if (_viewportMetrics.physical_width)
     [self surfaceUpdated:YES];

@@ -29,12 +29,12 @@ Animator::Animator(fxl::WeakPtr<Rasterizer> rasterizer,
 Animator::~Animator() = default;
 
 void Animator::Stop() {
-  FTL_DLOG(ERROR) << "========================= Animator::Stop()";
+  FXL_DLOG(ERROR) << "========================= Animator::Stop()";
   paused_ = true;
 }
 
 void Animator::Start() {
-  FTL_DLOG(ERROR) << "========================= Animator::Start()";
+  FXL_DLOG(ERROR) << "========================= Animator::Start()";
   if (!paused_) {
     return;
   }

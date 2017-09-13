@@ -44,7 +44,7 @@ void PlatformViewIOS::Attach(fxl::Closure firstFrameCallback) {
 }
 
 void PlatformViewIOS::NotifyCreated() {
-  FTL_DLOG(ERROR) << "========================= PlatformViewIOS::NotifyCreated()";
+  FXL_DLOG(ERROR) << "========================= PlatformViewIOS::NotifyCreated()";
   PlatformView::NotifyCreated(ios_surface_->CreateGPUSurface());
 }
 
