@@ -166,6 +166,7 @@ bool IOSGLContext::PresentRenderBuffer() const {
 }
 
 bool IOSGLContext::UpdateStorageSizeIfNecessary() {
+  FTL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary()";
   const CGSize layer_size = [layer_.get() bounds].size;
 
   const GLint size_width = layer_size.width;
@@ -196,10 +197,11 @@ bool IOSGLContext::UpdateStorageSizeIfNecessary() {
 
   if (![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]) {!
     FXL_LOG(ERROR) << "========================= IOSGLContext::UpdateStorageSizeIfNecessary() FAIL ![context_.get() renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer_.get()]";
-    FXL_LOG(ERROR) << eglGetError();
+    FXL_LOG(ERROR) << "fail " << eglGetError();
     return false;
   }
 
+  FXL_LOG(ERROR) << "no fail" << eglGetError();
   GLint width = 0;
   GLint height = 0;
   bool rebind_color_buffer = false;
