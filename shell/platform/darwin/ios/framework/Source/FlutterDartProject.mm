@@ -38,9 +38,9 @@ static flutter::Settings DefaultSettingsForProcess(NSBundle* bundle = nil) {
   NSBundle* engineBundle = [NSBundle bundleForClass:[FlutterViewController class]];
 
   bool hasExplicitBundle = bundle != nil;
-  if (bundle == nil) {
-    bundle = [NSBundle bundleWithIdentifier:[FlutterDartProject defaultBundleIdentifier]];
-  }
+  // if (bundle == nil) {
+  //   bundle = [NSBundle bundleWithIdentifier:[FlutterDartProject defaultBundleIdentifier]];
+  // }
   if (bundle == nil) {
     bundle = mainBundle;
   }

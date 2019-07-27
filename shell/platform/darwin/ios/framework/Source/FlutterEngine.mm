@@ -311,7 +311,7 @@
 - (BOOL)createShell:(NSString*)entrypoint libraryURI:(NSString*)libraryURI {
   if (_shell != nullptr) {
     FML_LOG(WARNING) << "This FlutterEngine was already invoked.";
-    return NO;
+    return YES;
   }
 
   static size_t shellCount = 1;
