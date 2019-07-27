@@ -105,6 +105,8 @@ FLUTTER_EXPORT
  */
 - (BOOL)runWithEntrypoint:(NSString*)entrypoint;
 
+- (BOOL)createShell:(NSString*)entrypoint;
+
 /**
  * Runs a Dart program on an Isolate using the specified entrypoint and Dart library,
  * which may not be the same as the library containing the Dart program's `main()` function.

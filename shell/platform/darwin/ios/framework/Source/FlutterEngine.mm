@@ -416,6 +416,10 @@
   return [self runWithEntrypoint:entrypoint libraryURI:nil];
 }
 
+- (BOOL)createShell:(NSString*)entrypoint {
+  return [self createShell:entrypoint libraryURI:nil];
+}
+
 #pragma mark - Text input delegate
 
 - (void)updateEditingClient:(int)client withState:(NSDictionary*)state {
