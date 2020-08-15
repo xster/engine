@@ -47,8 +47,8 @@ void CheckSkTypeface(sk_sp<SkTypeface> typeface) {
 sk_sp<SkTypeface> MakeApplePreferredSkTypeface() {
   #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
   [FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody];
-  return SkMakeTypefaceFromCTFont(CTFontCreateWithName(kCTFontUIFontSystem, 30, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
-  return SkMakeTypefaceFromCTFont(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
+  return SkMakeTypefaceFromCTFont(CTFontCreateWithName((CFStringRef) @".SFUI-Regular", 30, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
+  // return SkMakeTypefaceFromCTFont(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
   #else
   return NULL;
   #endif
