@@ -9,6 +9,8 @@
 
 #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
 #include <UIKit/UIKit.h>
+#include <CoreText/CoreText.h>
+#include "third_party/skia/include/ports/SkTypeface_mac.h"
 #define FONT_CLASS UIFont
 #else  // TARGET_OS_EMBEDDED
 #include <AppKit/AppKit.h>
@@ -33,6 +35,23 @@ std::vector<std::string> GetDefaultFontFamilies() {
 
 sk_sp<SkFontMgr> GetDefaultFontManager() {
   return SkFontMgr::RefDefault();
+}
+
+void CheckSkTypeface(sk_sp<SkTypeface> typeface) {
+  #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
+  CTFontRef ctfont = SkTypeface_GetCTFontRef(typeface.get());
+  CFShow(ctfont);
+  #endif
+}
+
+sk_sp<SkTypeface> MakeApplePreferredSkTypeface() {
+  #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
+  [FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody];
+  return SkMakeTypefaceFromCTFont(CTFontCreateWithName(kCTFontUIFontSystem, 30, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
+  return SkMakeTypefaceFromCTFont(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
+  #else
+  return NULL;
+  #endif
 }
 
 }  // namespace txt

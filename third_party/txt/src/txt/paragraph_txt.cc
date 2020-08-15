@@ -35,6 +35,7 @@
 #include "minikin/LayoutUtils.h"
 #include "minikin/LineBreaker.h"
 #include "minikin/MinikinFont.h"
+#include "platform.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkFont.h"
 #include "third_party/skia/include/core/SkFontMetrics.h"

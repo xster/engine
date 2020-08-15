@@ -18,6 +18,10 @@ std::vector<std::string> GetDefaultFontFamilies();
 
 sk_sp<SkFontMgr> GetDefaultFontManager();
 
+void CheckSkTypeface(sk_sp<SkTypeface> typeface);
+
+sk_sp<SkTypeface> MakeApplePreferredSkTypeface();
+
 }  // namespace txt
 
 #endif  // TXT_PLATFORM_H_

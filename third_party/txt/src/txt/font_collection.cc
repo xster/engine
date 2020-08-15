@@ -113,19 +113,19 @@ void FontCollection::SetTestFontManager(sk_sp<SkFontMgr> font_manager) {
 std::vector<sk_sp<SkFontMgr>> FontCollection::GetFontManagerOrder() const {
   std::vector<sk_sp<SkFontMgr>> order;
   if (dynamic_font_manager_) {
-    FML_LOG(ERROR) << "Manager has dynamic font manager";
+    FML_LOG(ERROR) << "    Manager has dynamic font manager";
     order.push_back(dynamic_font_manager_);
   }
   if (asset_font_manager_) {
     order.push_back(asset_font_manager_);
-    FML_LOG(ERROR) << "Manager has asset font manager";
+    FML_LOG(ERROR) << "    Manager has asset font manager";
   }
   if (test_font_manager_) {
-    FML_LOG(ERROR) << "Manager has test font manager";
+    FML_LOG(ERROR) << "    Manager has test font manager";
     order.push_back(test_font_manager_);
   }
   if (default_font_manager_) {
-    FML_LOG(ERROR) << "Manager has default font manager";
+    FML_LOG(ERROR) << "    Manager has default font manager";
     order.push_back(default_font_manager_);
   }
   return order;
@@ -160,7 +160,7 @@ FontCollection::GetMinikinFontCollectionForFamilies(
     }
   }
 
-  FML_LOG(ERROR) << "Found minikin families " << minikin_families.size();
+  FML_LOG(ERROR) << "  Found minikin families " << minikin_families.size();
 
   // Search for default font family if no user font families were found.
   if (minikin_families.empty()) {
@@ -168,7 +168,7 @@ FontCollection::GetMinikinFontCollectionForFamilies(
       FML_LOG(ERROR) << "  Getting defaults which are " << std::accumulate(default_font_families.begin(), default_font_families.end(), std::string{});
 
     for (const auto& family : default_font_families) {
-      FML_LOG(ERROR) << "Looking for " << family << " in default fonts";
+      FML_LOG(ERROR) << "  Looking for " << family << " in default fonts";
       std::shared_ptr<minikin::FontFamily> minikin_family =
           FindFontFamilyInManagers(family);
       if (minikin_family != nullptr) {
@@ -178,7 +178,7 @@ FontCollection::GetMinikinFontCollectionForFamilies(
     }
   }
 
-  FML_LOG(ERROR) << "Together with defaults, there are " << minikin_families.size();
+  FML_LOG(ERROR) << "  Together with defaults, there are " << minikin_families.size();
 
   // Default font family also not found. We fail to get a FontCollection.
   if (minikin_families.empty()) {
@@ -186,9 +186,10 @@ FontCollection::GetMinikinFontCollectionForFamilies(
     return nullptr;
   }
   if (enable_font_fallback_) {
-    FML_LOG(ERROR) << "Going to fallback fonts";
+    FML_LOG(ERROR) << "  Going to fallback fonts";
     for (const std::string& fallback_family :
          fallback_fonts_for_locale_[locale]) {
+      FML_LOG(ERROR) << "  Adding follback font " << fallback_family;
       auto it = fallback_fonts_.find(fallback_family);
       if (it != fallback_fonts_.end()) {
         minikin_families.push_back(it->second);
@@ -243,14 +244,16 @@ std::shared_ptr<minikin::FontFamily> FontCollection::CreateMinikinFontFamily(
   std::vector<sk_sp<SkTypeface>> skia_typefaces;
   for (int i = 0; i < font_style_set->count(); ++i) {
     TRACE_EVENT0("flutter", "CreateSkiaTypeface");
-    sk_sp<SkTypeface> skia_typeface(
-        sk_sp<SkTypeface>(font_style_set->createTypeface(i)));
+    sk_sp<SkTypeface> skia_typeface = MakeApplePreferredSkTypeface();
+    // sk_sp<SkTypeface> skia_typeface(
+    //     sk_sp<SkTypeface>(font_style_set->createTypeface(i)));
     if (skia_typeface != nullptr) {
+      CheckSkTypeface(skia_typeface);
       skia_typefaces.emplace_back(std::move(skia_typeface));
     }
   }
 
-  FML_LOG(ERROR) << "    Now " << family_name << " has the following SkTypefaces" << std::accumulate(skia_typefaces.begin(), skia_typefaces.end(), std::string{});
+  FML_LOG(ERROR) << "    Now " << family_name << " has the SkTypeface count " << skia_typefaces.size();
   std::sort(skia_typefaces.begin(), skia_typefaces.end(),
             [](const sk_sp<SkTypeface>& a, const sk_sp<SkTypeface>& b) {
               SkFontStyle a_style = a->fontStyle();
