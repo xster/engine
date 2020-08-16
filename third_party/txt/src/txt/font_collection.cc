@@ -20,7 +20,6 @@
 #include <list>
 #include <memory>
 #include <mutex>
-#include <numeric>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -112,22 +111,14 @@ void FontCollection::SetTestFontManager(sk_sp<SkFontMgr> font_manager) {
 // Return the available font managers in the order they should be queried.
 std::vector<sk_sp<SkFontMgr>> FontCollection::GetFontManagerOrder() const {
   std::vector<sk_sp<SkFontMgr>> order;
-  if (dynamic_font_manager_) {
-    FML_LOG(ERROR) << "    Manager has dynamic font manager";
+  if (dynamic_font_manager_)
     order.push_back(dynamic_font_manager_);
-  }
-  if (asset_font_manager_) {
+  if (asset_font_manager_)
     order.push_back(asset_font_manager_);
-    FML_LOG(ERROR) << "    Manager has asset font manager";
-  }
-  if (test_font_manager_) {
-    FML_LOG(ERROR) << "    Manager has test font manager";
+  if (test_font_manager_)
     order.push_back(test_font_manager_);
-  }
-  if (default_font_manager_) {
-    FML_LOG(ERROR) << "    Manager has default font manager";
+  if (default_font_manager_)
     order.push_back(default_font_manager_);
-  }
   return order;
 }
 
@@ -244,9 +235,8 @@ std::shared_ptr<minikin::FontFamily> FontCollection::CreateMinikinFontFamily(
   std::vector<sk_sp<SkTypeface>> skia_typefaces;
   for (int i = 0; i < font_style_set->count(); ++i) {
     TRACE_EVENT0("flutter", "CreateSkiaTypeface");
-    sk_sp<SkTypeface> skia_typeface = MakeApplePreferredSkTypeface();
-    // sk_sp<SkTypeface> skia_typeface(
-    //     sk_sp<SkTypeface>(font_style_set->createTypeface(i)));
+    sk_sp<SkTypeface> skia_typeface(
+        sk_sp<SkTypeface>(font_style_set->createTypeface(i)));
     if (skia_typeface != nullptr) {
       CheckSkTypeface(skia_typeface);
       skia_typefaces.emplace_back(std::move(skia_typeface));
@@ -267,10 +257,6 @@ std::shared_ptr<minikin::FontFamily> FontCollection::CreateMinikinFontFamily(
   for (const sk_sp<SkTypeface>& skia_typeface : skia_typefaces) {
     // Create the minikin font from the skia typeface.
     // Divide by 100 because the weights are given as "100", "200", etc.
-
-    // CTFontRef ctfont = SkTypeface_GetCTFontRef(skia_typeface);
-    // CFShow(ctfont);
-
     minikin_fonts.emplace_back(
         std::make_shared<FontSkia>(skia_typeface),
         minikin::FontStyle{skia_typeface->fontStyle().weight() / 100,
