@@ -23,38 +23,28 @@
 namespace txt {
 
 void DisplayFont(CTFontRef font) {
-  CFShow(CTFontCopyFontDescriptor(font));
+  // CFShow(CTFontCopyFontDescriptor(font));
   CFShow(CTFontCopyTraits(font));
-  CFShow(CTFontCopyAttribute(font, kCTFontURLAttribute));
-  CFShow(CTFontCopyAttribute(font, kCTFontStyleNameAttribute));
-  CFShow(CTFontCopyAttribute(font, kCTFontFeaturesAttribute));
-  CFShow(CTFontCopyAttribute(font, kCTFontFormatAttribute));
-  CFShow(CTFontCopyPostScriptName(font));
-  CFShow(CTFontCopyFamilyName(font));
-  CFShow(CTFontCopyFullName(font));
-  CFShow(CTFontCopyDisplayName(font));
-  FML_LOG(ERROR) << "Leading is " << CTFontGetLeading(font);
-  CFShow(CTFontCopyVariation(font));
+  // CFShow(CTFontCopyAttribute(font, kCTFontURLAttribute));
+  // CFShow(CTFontCopyAttribute(font, kCTFontStyleNameAttribute));
+  // CFShow(CTFontCopyAttribute(font, kCTFontFeaturesAttribute));
+  // CFShow(CTFontCopyAttribute(font, kCTFontFormatAttribute));
+  // CFShow(CTFontCopyPostScriptName(font));
+  // CFShow(CTFontCopyFamilyName(font));
+  // CFShow(CTFontCopyFullName(font));
+  // CFShow(CTFontCopyDisplayName(font));
+  // FML_LOG(ERROR) << "Leading is " << CTFontGetLeading(font);
+  // CFShow(CTFontCopyVariation(font));
 }
 
 std::vector<std::string> GetDefaultFontFamilies() {
   if (fml::IsPlatformVersionAtLeast(9)) {
-#if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
-    FML_LOG(ERROR) << "System font size 14 family name is " <<
-        [FONT_CLASS systemFontOfSize:14].familyName.UTF8String << " font name "
-                   << [FONT_CLASS systemFontOfSize:14].fontName.UTF8String;
-    FML_LOG(ERROR) << "System preferred body family name is "
-                   << [FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]
-                          .familyName.UTF8String
-                   << " font name "
-                   << [FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]
-                          .fontName.UTF8String;
-    // DisplayFont(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 12, nil));
-    return {[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]
-                .familyName.UTF8String};
-#else
+// #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
+//     return {[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]
+//                 .familyName.UTF8String};
+// #else
     return {[FONT_CLASS systemFontOfSize:14].familyName.UTF8String};
-#endif
+// #endif
   } else {
     return {"Helvetica"};
   }
@@ -63,22 +53,12 @@ std::vector<std::string> GetDefaultFontFamilies() {
 void CheckSkTypeface(sk_sp<SkTypeface> typeface) {
 #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
   CTFontRef ctfont = SkTypeface_GetCTFontRef(typeface.get());
+  FML_LOG(ERROR) << "ctfont is:";
   CFShow(ctfont);
-  // DisplayFont(ctfont);
-#endif
-}
-
-sk_sp<SkTypeface> MakeApplePreferredSkTypeface() {
-#if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
-  [FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody];
-  return SkMakeTypefaceFromCTFont(CTFontCreateWithName(
-      (CFStringRef) @".SFUI-Regular", 30,
-      nil));  //[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
-// return
-// SkMakeTypefaceFromCTFont(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem,
-// 12, nil));//[FONT_CLASS preferredFontForTextStyle:UIFontTextStyleBody]);
-#else
-  return NULL;
+  FML_LOG(ERROR) << "ctfontdescriptor is:";
+  CFShow(CTFontCopyFontDescriptor(ctfont));
+  FML_LOG(ERROR) << "Weight: " << typeface->fontStyle().weight() << " Width: " << typeface->fontStyle().width();
+  DisplayFont(ctfont);
 #endif
 }
 
@@ -152,8 +132,8 @@ class SkFontMgr_MacSystem : public SkFontMgr {
       std::string searchName(familyName);
       if (searchName.find("SF") != std::string::npos &&
           searchName.find("Display") != std::string::npos) {
-        // return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kctfontuifont, 34, nil));
-        return new SkFontStyleSet_MacSystem(CTFontCreateWithFontDescriptor([UIFont preferredFontForTextStyle:UIFontTextStyleLargeTitle].fontDescriptor, 0, nil));
+        return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 34, nil));
+        // return new SkFontStyleSet_MacSystem(CTFontCreateWithFontDescriptor([UIFont preferredFontForTextStyle:UIFontTextStyleLargeTitle].fontDescriptor, 0, nil));
       } else {
         // Otherwise, map various string forms of SF Pro Text or anything else
         // to the default font.
@@ -166,17 +146,21 @@ class SkFontMgr_MacSystem : public SkFontMgr {
 
   // Just delegate the rest to the Skia SkFontMgr_Mac.
   int onCountFamilies() const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->countFamilies();
   }
   void onGetFamilyName(int index, SkString* familyName) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->getFamilyName(index, familyName);
   }
   SkFontStyleSet* onCreateStyleSet(int index) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->createStyleSet(index);
   }
 
   SkTypeface* onMatchFamilyStyle(const char familyName[],
                                  const SkFontStyle& style) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->matchFamilyStyle(familyName, style);
   }
   SkTypeface* onMatchFamilyStyleCharacter(const char familyName[],
@@ -184,6 +168,7 @@ class SkFontMgr_MacSystem : public SkFontMgr {
                                           const char* bcp47[],
                                           int bcp47Count,
                                           SkUnichar character) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->matchFamilyStyleCharacter(
         familyName, style, bcp47, bcp47Count, character);
   }
@@ -191,22 +176,26 @@ class SkFontMgr_MacSystem : public SkFontMgr {
                                const SkFontStyle&) const override {
     // SkFontMgr has no API for this for some reason to compose this. But
     // SkFontMgr_Mac doesn't implement this anyway.
+    FML_NOTIMPLEMENTED();
     return nullptr;
   }
 
   sk_sp<SkTypeface> onMakeFromData(sk_sp<SkData> data,
                                    int ttcIndex) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->makeFromData(std::move(data), ttcIndex);
   }
   sk_sp<SkTypeface> onMakeFromStreamIndex(
       std::unique_ptr<SkStreamAsset> streamAsset,
       int ttcIndex) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->makeFromStream(std::move(streamAsset),
                                                       ttcIndex);
   }
   sk_sp<SkTypeface> onMakeFromStreamArgs(
       std::unique_ptr<SkStreamAsset> streamAsset,
       const SkFontArguments& arguments) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->makeFromStream(std::move(streamAsset),
                                                       arguments);
   }
@@ -215,15 +204,18 @@ class SkFontMgr_MacSystem : public SkFontMgr {
     // We can't support this since SkFontData doesn't have a public header and
     // we can't move this unique_ptr from a forward type declaration. Doesn't
     // really matter since this isn't used by Flutter.
+    FML_NOTIMPLEMENTED();
     return nullptr;
   }
   sk_sp<SkTypeface> onMakeFromFile(const char path[],
                                    int ttcIndex) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->makeFromFile(path, ttcIndex);
   }
 
   sk_sp<SkTypeface> onLegacyMakeTypeface(const char familyName[],
                                          SkFontStyle style) const override {
+    FML_NOTIMPLEMENTED();
     return delegate_mac_font_manager_->legacyMakeTypeface(familyName, style);
   }
 };
@@ -231,12 +223,12 @@ class SkFontMgr_MacSystem : public SkFontMgr {
 #endif
 
 sk_sp<SkFontMgr> GetDefaultFontManager() {
-#if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
-  return sk_make_sp<SkFontMgr_MacSystem>(SkFontMgr::RefDefault());
-#else
   return SkFontMgr::RefDefault();
-#endif
-  // return RefDefaultFontManager();
+// #if TARGET_OS_EMBEDDED || TARGET_OS_SIMULATOR
+//   return sk_make_sp<SkFontMgr_MacSystem>(SkFontMgr::RefDefault());
+// #else
+//   return SkFontMgr::RefDefault();
+// #endif
 }
 
 }  // namespace txt
