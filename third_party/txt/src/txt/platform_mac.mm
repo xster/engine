@@ -152,11 +152,12 @@ class SkFontMgr_MacSystem : public SkFontMgr {
       std::string searchName(familyName);
       if (searchName.find("SF") != std::string::npos &&
           searchName.find("Display") != std::string::npos) {
-        return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 17, nil));
+        // return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kctfontuifont, 34, nil));
+        return new SkFontStyleSet_MacSystem(CTFontCreateWithFontDescriptor([UIFont preferredFontForTextStyle:UIFontTextStyleLargeTitle].fontDescriptor, 0, nil));
       } else {
         // Otherwise, map various string forms of SF Pro Text or anything else
         // to the default font.
-        return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 21, nil));
+        return new SkFontStyleSet_MacSystem(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, 17, nil));
       }
     } else {
       return delegate_mac_font_manager_->matchFamily(familyName);
