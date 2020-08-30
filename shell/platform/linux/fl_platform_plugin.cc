@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 #include "flutter/shell/platform/linux/fl_platform_plugin.h"
-#include "flutter/shell/platform/linux/public/flutter_linux/fl_json_method_codec.h"
 #include "flutter/shell/platform/linux/public/flutter_linux/fl_method_channel.h"
+#include "flutter/shell/platform/linux/public/flutter_linux/fl_standard_method_codec.h"
 
 #include <gtk/gtk.h>
 
@@ -157,7 +157,7 @@ FlPlatformPlugin* fl_platform_plugin_new(FlBinaryMessenger* messenger) {
   FlPlatformPlugin* self =
       FL_PLATFORM_PLUGIN(g_object_new(fl_platform_plugin_get_type(), nullptr));
 
-  g_autoptr(FlJsonMethodCodec) codec = fl_json_method_codec_new();
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
   self->channel =
       fl_method_channel_new(messenger, kChannelName, FL_METHOD_CODEC(codec));
   fl_method_channel_set_method_call_handler(self->channel, method_call_cb, self,

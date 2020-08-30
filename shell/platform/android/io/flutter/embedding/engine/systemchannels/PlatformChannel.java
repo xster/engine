@@ -8,7 +8,6 @@ import android.content.pm.ActivityInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import dalvik.system.DexClassLoader;
 import io.flutter.Log;
 import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.plugin.common.StandardMethodCodec;
