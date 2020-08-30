@@ -385,7 +385,7 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   _platformChannel.reset([[FlutterMethodChannel alloc]
          initWithName:@"flutter/platform"
       binaryMessenger:self.binaryMessenger
-                codec:[FlutterJSONMethodCodec sharedInstance]]);
+                codec:[FlutterStandardMethodCodec sharedInstance]]);
 
   _platformViewsChannel.reset([[FlutterMethodChannel alloc]
          initWithName:@"flutter/platform_views"

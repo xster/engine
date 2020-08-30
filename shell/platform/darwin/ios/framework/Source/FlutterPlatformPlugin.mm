@@ -90,8 +90,45 @@ using namespace flutter;
     result(nil);
   } else if ([method isEqualToString:@"Clipboard.hasStrings"]) {
     result([self clipboardHasStrings]);
+  } else if ([method isEqualToString:@"SystemImage.load"]) {
+    result([self loadSystemImage:args]);
   } else {
     result(FlutterMethodNotImplemented);
+  }
+}
+
+- (NSDictionary*)loadSystemImage:(NSDictionary*)args {
+  if (@available(ios 14.0, *)) {
+    NSString* systemImageName = args[@"name"];
+    NSNumber* size = args[@"size"];
+    UIImage* image;
+    FML_LOG(ERROR) << " Requesting image " << systemImageName.UTF8String;
+    FML_LOG(ERROR) << " Requesting size " << [size intValue];
+
+    if (size == (id)[NSNull null]) {
+      FML_LOG(ERROR) << "Asking without size";
+      image = [UIImage systemImageNamed:systemImageName];
+    } else {
+      FML_LOG(ERROR) << "Asking with size";
+      image = [UIImage systemImageNamed:systemImageName
+                      withConfiguration:[UIImageSymbolConfiguration
+                                            configurationWithPointSize:[size intValue]]];
+    }
+    NSData* data = UIImagePNGRepresentation(image);
+    if (data) {
+      FML_LOG(ERROR) << "The underlying image is " << [image imageAsset];
+      FML_LOG(ERROR) << "The scale is " << [image scale];
+      FML_LOG(ERROR) << "The size is " << NSStringFromCGSize([image size]).UTF8String;
+      return @{
+        @"scale" : @(image.scale),
+        @"data" : [FlutterStandardTypedData typedDataWithBytes:data],
+      };
+    } else {
+      return nil;
+    }
+  } else {
+    // We only support loading system images in iOS 14+.
+    return nil;
   }
 }
 

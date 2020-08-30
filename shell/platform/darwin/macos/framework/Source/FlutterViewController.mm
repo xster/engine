@@ -372,7 +372,7 @@ static void CommonInit(FlutterViewController* controller) {
   _platformChannel =
       [FlutterMethodChannel methodChannelWithName:@"flutter/platform"
                                   binaryMessenger:_engine.binaryMessenger
-                                            codec:[FlutterJSONMethodCodec sharedInstance]];
+                                            codec:[FlutterStandardMethodCodec sharedInstance]];
   __weak FlutterViewController* weakSelf = self;
   [_platformChannel setMethodCallHandler:^(FlutterMethodCall* call, FlutterResult result) {
     [weakSelf handleMethodCall:call result:result];

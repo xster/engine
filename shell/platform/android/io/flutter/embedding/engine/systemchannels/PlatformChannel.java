@@ -8,16 +8,16 @@ import android.content.pm.ActivityInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+import dalvik.system.DexClassLoader;
 import io.flutter.Log;
 import io.flutter.embedding.engine.dart.DartExecutor;
-import io.flutter.plugin.common.JSONMethodCodec;
+import io.flutter.plugin.common.StandardMethodCodec;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.Map;
 
 /**
  * System channel that receives requests for host platform behavior, e.g., haptic and sound effects,
@@ -52,7 +52,7 @@ public class PlatformChannel {
                   result.success(null);
                 } catch (NoSuchFieldException exception) {
                   // The desired sound type does not exist.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "HapticFeedback.vibrate":
@@ -63,43 +63,41 @@ public class PlatformChannel {
                   result.success(null);
                 } catch (NoSuchFieldException exception) {
                   // The desired feedback type does not exist.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "SystemChrome.setPreferredOrientations":
                 try {
-                  int androidOrientation = decodeOrientations((JSONArray) arguments);
+                  int androidOrientation = decodeOrientations((List<String>) arguments);
                   platformMessageHandler.setPreferredOrientations(androidOrientation);
                   result.success(null);
-                } catch (JSONException | NoSuchFieldException exception) {
-                  // JSONException: One or more expected fields were either omitted or referenced an
-                  // invalid type.
+                } catch (ClassCastException | NoSuchFieldException exception) {
                   // NoSuchFieldException: One or more expected fields were either omitted or
                   // referenced an invalid type.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "SystemChrome.setApplicationSwitcherDescription":
                 try {
                   AppSwitcherDescription description =
-                      decodeAppSwitcherDescription((JSONObject) arguments);
+                      decodeAppSwitcherDescription((Map) arguments);
                   platformMessageHandler.setApplicationSwitcherDescription(description);
                   result.success(null);
-                } catch (JSONException exception) {
+                } catch (ClassCastException | NullPointerException exception) {
                   // One or more expected fields were either omitted or referenced an invalid type.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "SystemChrome.setEnabledSystemUIOverlays":
                 try {
-                  List<SystemUiOverlay> overlays = decodeSystemUiOverlays((JSONArray) arguments);
+                  List<SystemUiOverlay> overlays = decodeSystemUiOverlays((List) arguments);
                   platformMessageHandler.showSystemOverlays(overlays);
                   result.success(null);
-                } catch (JSONException | NoSuchFieldException exception) {
-                  // JSONException: One or more expected fields were either omitted or referenced an
+                } catch (ClassCastException | NoSuchFieldException exception) {
+                  // ClassCastException: One or more expected fields were either omitted or referenced an
                   // invalid type.
                   // NoSuchFieldException: One or more of the overlay names are invalid.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "SystemChrome.restoreSystemUIOverlays":
@@ -109,14 +107,14 @@ public class PlatformChannel {
               case "SystemChrome.setSystemUIOverlayStyle":
                 try {
                   SystemChromeStyle systemChromeStyle =
-                      decodeSystemChromeStyle((JSONObject) arguments);
+                      decodeSystemChromeStyle((Map<String, ?>) arguments);
                   platformMessageHandler.setSystemUiOverlayStyle(systemChromeStyle);
                   result.success(null);
-                } catch (JSONException | NoSuchFieldException exception) {
-                  // JSONException: One or more expected fields were either omitted or referenced an
+                } catch (ClassCastException | NoSuchFieldException exception) {
+                  // ClassCastException: One or more expected fields were either omitted or referenced an
                   // invalid type.
                   // NoSuchFieldException: One or more of the brightness names are invalid.
-                  result.error("error", exception.getMessage(), null);
+                  result.error("error", exception.getMessage(), android.util.Log.getStackTraceString(exception));
                 }
                 break;
               case "SystemNavigator.pop":
@@ -140,8 +138,8 @@ public class PlatformChannel {
                   CharSequence clipboardContent =
                       platformMessageHandler.getClipboardData(clipboardFormat);
                   if (clipboardContent != null) {
-                    JSONObject response = new JSONObject();
-                    response.put("text", clipboardContent);
+                    Map<String, String> response = new HashMap<String, String>();
+                    response.put("text", clipboardContent.toString());
                     result.success(response);
                   } else {
                     result.success(null);
@@ -150,7 +148,7 @@ public class PlatformChannel {
                 }
               case "Clipboard.setData":
                 {
-                  String clipboardContent = ((JSONObject) arguments).getString("text");
+                  String clipboardContent = ((Map<String, String>) arguments).get("text");
                   platformMessageHandler.setClipboardData(clipboardContent);
                   result.success(null);
                   break;
@@ -158,17 +156,24 @@ public class PlatformChannel {
               case "Clipboard.hasStrings":
                 {
                   boolean hasStrings = platformMessageHandler.clipboardHasStrings();
-                  JSONObject response = new JSONObject();
+                  Map<String, Boolean> response = new HashMap<String, Boolean>();
                   response.put("value", hasStrings);
                   result.success(response);
+                  break;
+                }
+              case "SystemImage.load":
+                {
+                  // Android doesn't implement loading system images.
+                  Log.v(TAG, "Android does not support loading system images");
+                  result.success(null);
                   break;
                 }
               default:
                 result.notImplemented();
                 break;
             }
-          } catch (JSONException e) {
-            result.error("error", "JSON error: " + e.getMessage(), null);
+          } catch (ClassCastException e) {
+            result.error("error", "Type error: " + e.getMessage(), null);
           }
         }
       };
@@ -182,7 +187,7 @@ public class PlatformChannel {
    * <p>See {@link DartExecutor}.
    */
   public PlatformChannel(@NonNull DartExecutor dartExecutor) {
-    channel = new MethodChannel(dartExecutor, "flutter/platform", JSONMethodCodec.INSTANCE);
+    channel = new MethodChannel(dartExecutor, "flutter/platform", StandardMethodCodec.INSTANCE);
     channel.setMethodCallHandler(parsingMethodCallHandler);
   }
 
@@ -199,16 +204,13 @@ public class PlatformChannel {
   /**
    * Decodes a series of orientations to an aggregate desired orientation.
    *
-   * @throws JSONException if {@code encodedOrientations} does not contain expected keys and value
-   *     types.
    * @throws NoSuchFieldException if any given encoded orientation is not a valid orientation name.
    */
-  private int decodeOrientations(@NonNull JSONArray encodedOrientations)
-      throws JSONException, NoSuchFieldException {
+  private int decodeOrientations(@NonNull List<String> encodedOrientations)
+      throws NoSuchFieldException {
     int requestedOrientation = 0x00;
     int firstRequestedOrientation = 0x00;
-    for (int index = 0; index < encodedOrientations.length(); index += 1) {
-      String encodedOrientation = encodedOrientations.getString(index);
+    for (String encodedOrientation : encodedOrientations) {
       DeviceOrientation orientation = DeviceOrientation.fromValue(encodedOrientation);
 
       switch (orientation) {
@@ -278,12 +280,12 @@ public class PlatformChannel {
 
   @NonNull
   private AppSwitcherDescription decodeAppSwitcherDescription(
-      @NonNull JSONObject encodedDescription) throws JSONException {
-    int color = encodedDescription.getInt("primaryColor");
+      @NonNull Map<String, Object> encodedDescription) throws ClassCastException, NullPointerException {
+    int color = ((Long) encodedDescription.get("primaryColor")).intValue();
     if (color != 0) { // 0 means color isn't set, use system default
       color = color | 0xFF000000; // color must be opaque if set
     }
-    String label = encodedDescription.getString("label");
+    String label = (String) encodedDescription.get("label");
     return new AppSwitcherDescription(color, label);
   }
 
@@ -295,11 +297,11 @@ public class PlatformChannel {
    * @throws NoSuchFieldException if any of the given encoded overlay names are invalid.
    */
   @NonNull
-  private List<SystemUiOverlay> decodeSystemUiOverlays(@NonNull JSONArray encodedSystemUiOverlay)
-      throws JSONException, NoSuchFieldException {
+  private List<SystemUiOverlay> decodeSystemUiOverlays(@NonNull List<Object> encodedSystemUiOverlay)
+      throws ClassCastException, NoSuchFieldException {
     List<SystemUiOverlay> overlays = new ArrayList<>();
-    for (int i = 0; i < encodedSystemUiOverlay.length(); ++i) {
-      String encodedOverlay = encodedSystemUiOverlay.getString(i);
+    for (Object encodedItem : encodedSystemUiOverlay) {
+      String encodedOverlay = (String) encodedItem;
       SystemUiOverlay overlay = SystemUiOverlay.fromValue(encodedOverlay);
       switch (overlay) {
         case TOP_OVERLAYS:
@@ -320,8 +322,8 @@ public class PlatformChannel {
    * @throws NoSuchFieldException if any provided brightness name is invalid.
    */
   @NonNull
-  private SystemChromeStyle decodeSystemChromeStyle(@NonNull JSONObject encodedStyle)
-      throws JSONException, NoSuchFieldException {
+  private SystemChromeStyle decodeSystemChromeStyle(@NonNull Map<String, ?> encodedStyle)
+      throws ClassCastException, NoSuchFieldException {
     Brightness systemNavigationBarIconBrightness = null;
     // TODO(mattcarroll): add color annotation
     Integer systemNavigationBarColor = null;
@@ -331,26 +333,26 @@ public class PlatformChannel {
     // TODO(mattcarroll): add color annotation
     Integer statusBarColor = null;
 
-    if (!encodedStyle.isNull("systemNavigationBarIconBrightness")) {
+    if (encodedStyle.get("systemNavigationBarIconBrightness") != null) {
       systemNavigationBarIconBrightness =
-          Brightness.fromValue(encodedStyle.getString("systemNavigationBarIconBrightness"));
+          Brightness.fromValue((String) encodedStyle.get("systemNavigationBarIconBrightness"));
     }
 
-    if (!encodedStyle.isNull("systemNavigationBarColor")) {
-      systemNavigationBarColor = encodedStyle.getInt("systemNavigationBarColor");
+    if (encodedStyle.get("systemNavigationBarColor") != null) {
+      systemNavigationBarColor = (Integer) encodedStyle.get("systemNavigationBarColor");
     }
 
-    if (!encodedStyle.isNull("statusBarIconBrightness")) {
+    if (encodedStyle.get("statusBarIconBrightness") != null) {
       statusBarIconBrightness =
-          Brightness.fromValue(encodedStyle.getString("statusBarIconBrightness"));
+          Brightness.fromValue((String) encodedStyle.get("statusBarIconBrightness"));
     }
 
-    if (!encodedStyle.isNull("statusBarColor")) {
-      statusBarColor = encodedStyle.getInt("statusBarColor");
+    if (encodedStyle.get("statusBarColor") != null) {
+      statusBarColor = (Integer) encodedStyle.get("statusBarColor");
     }
 
-    if (!encodedStyle.isNull("systemNavigationBarDividerColor")) {
-      systemNavigationBarDividerColor = encodedStyle.getInt("systemNavigationBarDividerColor");
+    if (encodedStyle.get("systemNavigationBarDividerColor") != null) {
+      systemNavigationBarDividerColor = (Integer) encodedStyle.get("systemNavigationBarDividerColor");
     }
 
     return new SystemChromeStyle(

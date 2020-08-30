@@ -9,7 +9,7 @@
 #include <iostream>
 #include <optional>
 
-#include "flutter/shell/platform/common/cpp/json_method_codec.h"
+#include "flutter/shell/platform/common/cpp/client_wrapper/include/flutter/standard_method_codec.h"
 #include "flutter/shell/platform/windows/flutter_windows_view.h"
 #include "flutter/shell/platform/windows/string_conversion.h"
 
@@ -199,26 +199,26 @@ bool ScopedClipboard::SetString(const std::wstring string) {
 
 PlatformHandler::PlatformHandler(flutter::BinaryMessenger* messenger,
                                  FlutterWindowsView* view)
-    : channel_(std::make_unique<flutter::MethodChannel<rapidjson::Document>>(
+    : channel_(std::make_unique<flutter::MethodChannel<EncodableValue>>(
           messenger,
           kChannelName,
-          &flutter::JsonMethodCodec::GetInstance())),
+          &flutter::StandardMethodCodec::GetInstance())),
       view_(view) {
   channel_->SetMethodCallHandler(
       [this](
-          const flutter::MethodCall<rapidjson::Document>& call,
-          std::unique_ptr<flutter::MethodResult<rapidjson::Document>> result) {
+          const flutter::MethodCall<EncodableValue>& call,
+          std::unique_ptr<flutter::MethodResult<EncodableValue>> result) {
         HandleMethodCall(call, std::move(result));
       });
 }
 
 void PlatformHandler::HandleMethodCall(
-    const flutter::MethodCall<rapidjson::Document>& method_call,
-    std::unique_ptr<flutter::MethodResult<rapidjson::Document>> result) {
+    const flutter::MethodCall<EncodableValue>& method_call,
+    std::unique_ptr<flutter::MethodResult<EncodableValue>> result) {
   const std::string& method = method_call.method_name();
   if (method.compare(kGetClipboardDataMethod) == 0) {
     // Only one string argument is expected.
-    const rapidjson::Value& format = method_call.arguments()[0];
+    const auto& format = std::get<EncodableMap>(*method_call.arguments());
 
     if (strcmp(format.GetString(), kTextPlainFormat) != 0) {
       result->Error(kClipboardError, kUnknownClipboardFormatMessage);
@@ -226,32 +226,22 @@ void PlatformHandler::HandleMethodCall(
     }
     ScopedClipboard clipboard;
     if (!clipboard.Open(std::get<HWND>(*view_->GetRenderTarget()))) {
-      rapidjson::Document error_code;
-      error_code.SetInt(::GetLastError());
-      result->Error(kClipboardError, "Unable to open clipboard", error_code);
+      result->Error(kClipboardError, "Unable to open clipboard", EncodableValue(::GetLastError()));
       return;
     }
     if (!clipboard.HasString()) {
-      result->Success(rapidjson::Document());
+      result->Success(EncodableValue());
       return;
     }
     std::optional<std::wstring> clipboard_string = clipboard.GetString();
     if (!clipboard_string) {
-      rapidjson::Document error_code;
-      error_code.SetInt(::GetLastError());
       result->Error(kClipboardError, "Unable to get clipboard data",
-                    error_code);
+                    EncodableValue(::GetLastError()));
       return;
     }
 
-    rapidjson::Document document;
-    document.SetObject();
-    rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-    document.AddMember(
-        rapidjson::Value(kTextKey, allocator),
-        rapidjson::Value(Utf8FromUtf16(*clipboard_string), allocator),
-        allocator);
-    result->Success(document);
+    result->Success(EncodableValue(
+          EncodableMap{{EncodableValue(kTextKey), EncodableValue(Utf8FromUtf16(*clipboard_string))}}));
   } else if (method.compare(kSetClipboardDataMethod) == 0) {
     const rapidjson::Value& document = *method_call.arguments();
     rapidjson::Value::ConstMemberIterator itr = document.FindMember(kTextKey);
