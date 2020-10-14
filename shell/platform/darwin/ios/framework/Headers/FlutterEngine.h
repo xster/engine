@@ -239,6 +239,8 @@ FLUTTER_EXPORT
  */
 - (void)ensureSemanticsEnabled;
 
+- (FlutterEngine*)spawnWithEntrypoint:(nullable NSString*)entryPoint;
+
 /**
  * Sets the `FlutterViewController` for this instance.  The FlutterEngine must be
  * running (e.g. a successful call to `-runWithEntrypoint:` or `-runWithEntrypoint:libraryURI`)

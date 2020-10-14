@@ -220,6 +220,11 @@ class Shell final : public PlatformView::Delegate,
   ///
   ~Shell();
 
+  std::unique_ptr<Shell> Spawn(
+      Settings settings,
+      const CreateCallback<PlatformView>& on_create_platform_view,
+      const CreateCallback<Rasterizer>& on_create_rasterizer);
+
   //----------------------------------------------------------------------------
   /// @brief      Starts an isolate for the given RunConfiguration.
   ///
