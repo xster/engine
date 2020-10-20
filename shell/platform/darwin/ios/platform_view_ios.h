@@ -88,6 +88,8 @@ class PlatformViewIOS final : public PlatformView {
   // |PlatformView|
   void SetSemanticsEnabled(bool enabled) override;
 
+  const std::shared_ptr<IOSContext>& GetIosContext() { return ios_context_; }
+
  private:
   /// Smart pointer for use with objective-c observers.
   /// This guarentees we remove the observer.
