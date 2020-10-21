@@ -39,8 +39,10 @@ sk_sp<GrDirectContext> IOSContextGL::CreateResourceContext() {
     return nullptr;
   }
 
-  return ShellIOManager::CreateCompatibleResourceLoadingContext(
+  auto result = ShellIOManager::CreateCompatibleResourceLoadingContext(
       GrBackend::kOpenGL_GrBackend, GPUSurfaceGLDelegate::GetDefaultPlatformGLInterface());
+  NSLog(@"create resource context: %p", result.get());
+  return result;
 }
 
 // |IOSContext|

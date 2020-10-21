@@ -45,6 +45,8 @@ IOSContextMetal::IOSContextMetal() {
       GrDirectContext::MakeMetal([device_ retain], [main_queue_ retain], context_options);
   resource_context_ =
       GrDirectContext::MakeMetal([device_ retain], [main_queue_ retain], context_options);
+  NSLog(@"main-context_ %p", main_context_.get());
+  NSLog(@"main-resource_context_ %p", resource_context_.get());
 
   if (!main_context_ || !resource_context_) {
     FML_DLOG(ERROR) << "Could not create Skia Metal contexts.";

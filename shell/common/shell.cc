@@ -711,8 +711,12 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
   auto io_task = [io_manager = io_manager_->GetWeakPtr(), platform_view,
                   ui_task_runner = task_runners_.GetUITaskRunner(), ui_task] {
     if (io_manager && !io_manager->GetResourceContext()) {
+      static sk_sp<GrDirectContext> s_resource_context;
+      if (!s_resource_context) {
+        s_resource_context = platform_view->CreateResourceContext();
+      }
       io_manager->NotifyResourceContextAvailable(
-          platform_view->CreateResourceContext());
+          s_resource_context);
     }
     // Step 1: Next, post a task on the UI thread to tell the engine that it has
     // an output surface.
