@@ -444,9 +444,10 @@ std::unique_ptr<Shell> Shell::Spawn(
       RunConfiguration::InferFromSettings(settings);
   TaskRunners task_runners = task_runners_;
   FML_DCHECK(task_runners.IsValid());
-  std::unique_ptr<Shell> result(Shell::Create(std::move(task_runners), settings,
-                                              on_create_platform_view,
-                                              on_create_rasterizer));
+  std::unique_ptr<Shell> result(
+      Shell::Create(std::move(task_runners), PlatformData{}, settings,
+                    vm_->GetVMData()->GetIsolateSnapshot(),
+                    on_create_platform_view, on_create_rasterizer, vm_));
   result->RunEngine(std::move(configuration));
   return result;
 }
