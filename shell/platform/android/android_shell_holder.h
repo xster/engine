@@ -46,7 +46,7 @@ class AndroidShellHolder {
   const flutter::Settings settings_;
   const std::shared_ptr<PlatformViewAndroidJNI> jni_facade_;
   fml::WeakPtr<PlatformViewAndroid> platform_view_;
-  ThreadHost thread_host_;
+  std::shared_ptr<ThreadHost> thread_host_;
   std::unique_ptr<Shell> shell_;
   bool is_valid_ = false;
   pthread_key_t thread_destruct_key_;
