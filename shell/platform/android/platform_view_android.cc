@@ -61,18 +61,29 @@ PlatformViewAndroid::PlatformViewAndroid(
     : PlatformView(delegate, std::move(task_runners)),
       jni_facade_(jni_facade),
       platform_view_android_delegate_(jni_facade) {
+  std::shared_ptr<AndroidContext> android_context;
+  static std::shared_ptr<AndroidContext> shared_gpu_context_;
+
   if (use_software_rendering) {
     android_context_ =
         std::make_unique<AndroidContext>(AndroidRenderingAPI::kSoftware);
   } else {
+    if (shared_gpu_context_) {
+      android_context = shared_gpu_context_;
+      FML_DLOG(ERROR) << "reusing existing context";
+    } else {
 #if SHELL_ENABLE_VULKAN
-    android_context_ =
-        std::make_unique<AndroidContext>(AndroidRenderingAPI::kVulkan);
+      FML_DLOG(ERROR) << "making a new vulkan context";
+      android_context =
+          std::make_shared<AndroidContext>(AndroidRenderingAPI::kVulkan);
 #else   // SHELL_ENABLE_VULKAN
-    android_context_ = std::make_unique<AndroidContextGL>(
-        AndroidRenderingAPI::kOpenGLES,
-        fml::MakeRefCounted<AndroidEnvironmentGL>());
+      FML_DLOG(ERROR) << "making a new open gl context";
+      android_context = std::make_shared<AndroidContextGL>(
+          AndroidRenderingAPI::kOpenGLES,
+          fml::MakeRefCounted<AndroidEnvironmentGL>());
 #endif  // SHELL_ENABLE_VULKAN
+      shared_gpu_context_ = android_context;
+    }
   }
   FML_CHECK(android_context_ && android_context_->IsValid())
       << "Could not create an Android context.";

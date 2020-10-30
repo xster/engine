@@ -97,13 +97,19 @@ Engine::Engine(Delegate& delegate,
 
 Engine::~Engine() = default;
 
+static std::shared_ptr<FontCollection> shared_font_collection_;
+
 fml::WeakPtr<Engine> Engine::GetWeakPtr() const {
   return weak_factory_.GetWeakPtr();
 }
 
 void Engine::SetupDefaultFontManager() {
   TRACE_EVENT0("flutter", "Engine::SetupDefaultFontManager");
-  font_collection_.SetupDefaultFontManager();
+  if (!shared_font_collection_) {
+    shared_font_collection_ = std::make_shared<FontCollection>();
+    shared_font_collection_->SetupDefaultFontManager();
+  }
+  // font_collection_.SetupDefaultFontManager();
 }
 
 std::shared_ptr<AssetManager> Engine::GetAssetManager() {
@@ -123,11 +129,12 @@ bool Engine::UpdateAssetManager(
   }
 
   // Using libTXT as the text engine.
-  font_collection_.RegisterFonts(asset_manager_);
+  shared_font_collection_->RegisterFonts(asset_manager_);
+  // font_collection_.RegisterFonts(asset_manager_);
 
-  if (settings_.use_test_fonts) {
-    font_collection_.RegisterTestFonts();
-  }
+  // if (settings_.use_test_fonts) {
+  //   font_collection_.RegisterTestFonts();
+  // }
 
   return true;
 }
@@ -463,7 +470,8 @@ void Engine::SetNeedsReportTimings(bool needs_reporting) {
 }
 
 FontCollection& Engine::GetFontCollection() {
-  return font_collection_;
+  return *shared_font_collection_.get();
+  //  return font_collection_;
 }
 
 void Engine::DoDispatchPacket(std::unique_ptr<PointerDataPacket> packet,
