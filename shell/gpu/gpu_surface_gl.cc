@@ -65,14 +65,17 @@ GPUSurfaceGL::GPUSurfaceGL(GPUSurfaceGLDelegate* delegate,
   // A similar work-around is also used in shell/common/io_manager.cc.
   options.fDisableGpuYUVConversion = true;
 
-  auto context = GrDirectContext::MakeGL(delegate_->GetGLInterface(), options);
+  static sk_sp<GrDirectContext> s_context;
+  if (!s_context) {
+    s_context = GrDirectContext::MakeGL(delegate_->GetGLInterface(), options);
+  }
 
-  if (context == nullptr) {
+  if (s_context == nullptr) {
     FML_LOG(ERROR) << "Failed to setup Skia Gr context.";
     return;
   }
 
-  context_ = std::move(context);
+  context_ = s_context;
 
   context_->setResourceCacheLimits(kGrCacheMaxCount, kGrCacheMaxByteSize);
 
