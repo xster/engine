@@ -73,6 +73,7 @@ AssetManagerFontStyleSet::~AssetManagerFontStyleSet() = default;
 
 void AssetManagerFontStyleSet::registerAsset(std::string asset) {
   assets_.emplace_back(asset);
+  FML_LOG(ERROR) << "------- Registering asset " << asset << " to vector " << &assets_;
 }
 
 int AssetManagerFontStyleSet::count() {
@@ -102,6 +103,7 @@ SkTypeface* AssetManagerFontStyleSet::createTypeface(int i) {
 
   TypefaceAsset& asset = assets_[index];
   if (!asset.typeface) {
+    FML_LOG(ERROR) << "------------- Creating asset " << asset.asset;
     std::unique_ptr<fml::Mapping> asset_mapping =
         asset_manager_->GetAsMapping(asset.asset);
     if (asset_mapping == nullptr) {
