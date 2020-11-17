@@ -40,11 +40,15 @@ namespace flutter {
  */
 class PlatformViewIOS final : public PlatformView {
  public:
-  explicit PlatformViewIOS(
-      PlatformView::Delegate& delegate,
-      IOSRenderingAPI rendering_api,
-      const std::shared_ptr<FlutterPlatformViewsController>& platform_views_controller,
-      flutter::TaskRunners task_runners);
+  PlatformViewIOS(PlatformView::Delegate& delegate,
+                  const std::shared_ptr<IOSContext>& context,
+                  const std::shared_ptr<FlutterPlatformViewsController>& platform_views_controller,
+                  flutter::TaskRunners task_runners);
+
+  explicit PlatformViewIOS(PlatformView::Delegate& delegate,
+                           IOSRenderingAPI rendering_api,
+                           const std::shared_ptr<FlutterPlatformViewsController>& platform_views_controller,
+                           flutter::TaskRunners task_runners);
 
   ~PlatformViewIOS() override;
 

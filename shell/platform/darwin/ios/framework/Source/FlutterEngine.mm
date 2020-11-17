@@ -944,10 +944,10 @@ static constexpr int kNumProfilerSamplesPerSec = 5;
   std::shared_ptr<flutter::IOSContext> context = ios_platform_view->GetIosContext();
   FML_DCHECK(context);
   flutter::Shell::CreateCallback<flutter::PlatformView> on_create_platform_view =
-      [self](flutter::Shell& shell) {
+      [self, context](flutter::Shell& shell) {
         [self recreatePlatformViewController];
         return std::make_unique<flutter::PlatformViewIOS>(
-            shell, self->_renderingApi, self->_platformViewsController, shell.GetTaskRunners());
+            shell, context, self->_platformViewsController, shell.GetTaskRunners());
       };
 
   flutter::Shell::CreateCallback<flutter::Rasterizer> on_create_rasterizer =
