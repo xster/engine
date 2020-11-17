@@ -78,7 +78,10 @@ class DartState : public std::enable_shared_from_this<DartState> {
                                       Dart_Handle library,
                                       Dart_Handle url);
 
- private:
+ protected:
+  Dart_Isolate isolate() const { return isolate_; }
+
+ private:  
   Dart_Isolate isolate_;
   DartPersistentValue private_constructor_name_;
   std::unique_ptr<DartClassLibrary> class_library_;

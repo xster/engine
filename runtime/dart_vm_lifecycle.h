@@ -55,7 +55,17 @@ class DartVMRef {
     return vm_.get();
   }
 
+  const DartVM* get() const {
+    FML_DCHECK(vm_);
+    return vm_.get();
+  }
+
   DartVM* operator->() {
+    FML_DCHECK(vm_);
+    return vm_.get();
+  }
+
+  const DartVM* operator->() const {
     FML_DCHECK(vm_);
     return vm_.get();
   }

@@ -39,6 +39,34 @@ constexpr char kSystemChannel[] = "flutter/system";
 constexpr char kTypeKey[] = "type";
 constexpr char kFontChange[] = "fontsChange";
 
+namespace {
+std::unique_ptr<Engine> CreateEngine(
+    Engine::Delegate& delegate,
+    const PointerDataDispatcherMaker& dispatcher_maker,
+    DartVM& vm,
+    fml::RefPtr<const DartSnapshot> isolate_snapshot,
+    TaskRunners task_runners,
+    const PlatformData platform_data,
+    Settings settings,
+    std::unique_ptr<Animator> animator,
+    fml::WeakPtr<IOManager> io_manager,
+    fml::RefPtr<SkiaUnrefQueue> unref_queue,
+    fml::WeakPtr<SnapshotDelegate> snapshot_delegate) {
+  return std::make_unique<Engine>(delegate,             //
+                                  dispatcher_maker,     //
+                                  vm,                   //
+                                  isolate_snapshot,     //
+                                  task_runners,         //
+                                  platform_data,        //
+                                  settings,             //
+                                  std::move(animator),  //
+                                  io_manager,           //
+                                  unref_queue,          //
+                                  snapshot_delegate     //
+  );
+}
+}  // namespace
+
 std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
     DartVMRef vm,
     TaskRunners task_runners,
@@ -46,7 +74,8 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
     Settings settings,
     fml::RefPtr<const DartSnapshot> isolate_snapshot,
     const Shell::CreateCallback<PlatformView>& on_create_platform_view,
-    const Shell::CreateCallback<Rasterizer>& on_create_rasterizer) {
+    const Shell::CreateCallback<Rasterizer>& on_create_rasterizer,
+    const Shell::EngineMaker& engine_maker) {
   if (!task_runners.IsValid()) {
     FML_LOG(ERROR) << "Task runners to run the shell were invalid.";
     return nullptr;
@@ -138,8 +167,8 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
                          vsync_waiter = std::move(vsync_waiter),          //
                          &weak_io_manager_future,                         //
                          &snapshot_delegate_future,                       //
-                         &unref_queue_future                              //
-  ]() mutable {
+                         &unref_queue_future,                             //
+                         &engine_maker]() mutable {
         TRACE_EVENT0("flutter", "ShellSetupUISubsystem");
         const auto& task_runners = shell->GetTaskRunners();
 
@@ -148,19 +177,18 @@ std::unique_ptr<Shell> Shell::CreateShellOnPlatformThread(
         auto animator = std::make_unique<Animator>(*shell, task_runners,
                                                    std::move(vsync_waiter));
 
-        engine_promise.set_value(std::make_unique<Engine>(
-            *shell,                         //
-            dispatcher_maker,               //
-            *shell->GetDartVM(),            //
-            std::move(isolate_snapshot),    //
-            task_runners,                   //
-            platform_data,                  //
-            shell->GetSettings(),           //
-            std::move(animator),            //
-            weak_io_manager_future.get(),   //
-            unref_queue_future.get(),       //
-            snapshot_delegate_future.get()  //
-            ));
+        engine_promise.set_value(engine_maker(*shell,                         //
+                                              dispatcher_maker,               //
+                                              *shell->GetDartVM(),            //
+                                              std::move(isolate_snapshot),    //
+                                              task_runners,                   //
+                                              platform_data,                  //
+                                              shell->GetSettings(),           //
+                                              std::move(animator),            //
+                                              weak_io_manager_future.get(),   //
+                                              unref_queue_future.get(),       //
+                                              snapshot_delegate_future.get()  //
+                                              ));
       }));
 
   if (!shell->Setup(std::move(platform_view),  //
@@ -280,9 +308,23 @@ std::unique_ptr<Shell> Shell::Create(
     const PlatformData platform_data,
     Settings settings,
     fml::RefPtr<const DartSnapshot> isolate_snapshot,
+    const CreateCallback<PlatformView>& on_create_platform_view,
+    const CreateCallback<Rasterizer>& on_create_rasterizer,
+    DartVMRef vm) {
+  return Create(task_runners, platform_data, settings, isolate_snapshot,
+                on_create_platform_view, on_create_rasterizer, vm,
+                CreateEngine);
+}
+
+std::unique_ptr<Shell> Shell::Create(
+    TaskRunners task_runners,
+    const PlatformData platform_data,
+    Settings settings,
+    fml::RefPtr<const DartSnapshot> isolate_snapshot,
     const Shell::CreateCallback<PlatformView>& on_create_platform_view,
     const Shell::CreateCallback<Rasterizer>& on_create_rasterizer,
-    DartVMRef vm) {
+    DartVMRef vm,
+    const Shell::EngineMaker& engine_maker) {
   PerformInitializationTasks(settings);
   PersistentCache::SetCacheSkSL(settings.cache_sksl);
 
@@ -305,16 +347,16 @@ std::unique_ptr<Shell> Shell::Create(
                          settings,                                        //
                          isolate_snapshot = std::move(isolate_snapshot),  //
                          on_create_platform_view,                         //
-                         on_create_rasterizer                             //
-  ]() mutable {
+                         on_create_rasterizer,                            //
+                         &engine_maker]() mutable {
         shell = CreateShellOnPlatformThread(std::move(vm),
                                             std::move(task_runners),      //
                                             platform_data,                //
                                             settings,                     //
                                             std::move(isolate_snapshot),  //
                                             on_create_platform_view,      //
-                                            on_create_rasterizer          //
-        );
+                                            on_create_rasterizer,         //
+                                            engine_maker);
         latch.Signal();
       }));
   latch.Wait();
@@ -439,15 +481,28 @@ Shell::~Shell() {
 std::unique_ptr<Shell> Shell::Spawn(
     Settings settings,
     const CreateCallback<PlatformView>& on_create_platform_view,
-    const CreateCallback<Rasterizer>& on_create_rasterizer) {
+    const CreateCallback<Rasterizer>& on_create_rasterizer) const {
+  FML_DCHECK(task_runners_.IsValid());
+  std::unique_ptr<Shell> result(Shell::Create(
+      task_runners_, PlatformData{}, settings,
+      vm_->GetVMData()->GetIsolateSnapshot(), on_create_platform_view,
+      on_create_rasterizer, vm_,
+      [engine = this->engine_.get()](
+          Engine::Delegate& delegate,
+          const PointerDataDispatcherMaker& dispatcher_maker, DartVM& vm,
+          fml::RefPtr<const DartSnapshot> isolate_snapshot,
+          TaskRunners task_runners, const PlatformData platform_data,
+          Settings settings, std::unique_ptr<Animator> animator,
+          fml::WeakPtr<IOManager> io_manager,
+          fml::RefPtr<SkiaUnrefQueue> unref_queue,
+          fml::WeakPtr<SnapshotDelegate> snapshot_delegate) {
+        return engine->Spawn(/*delegate=*/delegate,
+                             /*dispatcher_maker=*/dispatcher_maker,
+                             /*settings=*/settings,
+                             /*animator=*/std::move(animator));
+      }));
   RunConfiguration configuration =
       RunConfiguration::InferFromSettings(settings);
-  TaskRunners task_runners = task_runners_;
-  FML_DCHECK(task_runners.IsValid());
-  std::unique_ptr<Shell> result(
-      Shell::Create(std::move(task_runners), PlatformData{}, settings,
-                    vm_->GetVMData()->GetIsolateSnapshot(),
-                    on_create_platform_view, on_create_rasterizer, vm_));
   result->RunEngine(std::move(configuration));
   return result;
 }
@@ -716,8 +771,7 @@ void Shell::OnPlatformViewCreated(std::unique_ptr<Surface> surface) {
       if (!s_resource_context) {
         s_resource_context = platform_view->CreateResourceContext();
       }
-      io_manager->NotifyResourceContextAvailable(
-          s_resource_context);
+      io_manager->NotifyResourceContextAvailable(s_resource_context);
     }
     // Step 1: Next, post a task on the UI thread to tell the engine that it has
     // an output surface.
