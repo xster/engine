@@ -55,6 +55,24 @@ RuntimeController::RuntimeController(
       isolate_shutdown_callback_(p_isolate_shutdown_callback),
       persistent_isolate_data_(std::move(p_persistent_isolate_data)) {}
 
+std::unique_ptr<RuntimeController> RuntimeController::Spawn(
+    RuntimeDelegate& client,
+    std::string advisory_script_uri,
+    std::string advisory_script_entrypoint,
+    const std::function<void(int64_t)>& idle_notification_callback,
+    const fml::closure& isolate_create_callback,
+    const fml::closure& isolate_shutdown_callback,
+    std::shared_ptr<const fml::Mapping> persistent_isolate_data) const {
+  auto result = std::make_unique<RuntimeController>(
+      client, vm_, isolate_snapshot_, task_runners_, snapshot_delegate_,
+      hint_freed_delegate_, io_manager_, unref_queue_, image_decoder_,
+      advisory_script_uri, advisory_script_entrypoint,
+      idle_notification_callback, platform_data_, isolate_create_callback,
+      isolate_shutdown_callback, persistent_isolate_data);
+  result->spawning_isolate_ = root_isolate_;
+  return result;
+}
+
 RuntimeController::~RuntimeController() {
   FML_DCHECK(Dart_CurrentIsolate() == nullptr);
   std::shared_ptr<DartIsolate> root_isolate = root_isolate_.lock();
@@ -351,27 +369,48 @@ bool RuntimeController::LaunchRootIsolate(
     return false;
   }
 
-  auto strong_root_isolate =
-      DartIsolate::CreateRunningRootIsolate(
-          settings,                                       //
-          isolate_snapshot_,                              //
-          task_runners_,                                  //
-          std::make_unique<PlatformConfiguration>(this),  //
-          snapshot_delegate_,                             //
-          hint_freed_delegate_,                           //
-          io_manager_,                                    //
-          unref_queue_,                                   //
-          image_decoder_,                                 //
-          advisory_script_uri_,                           //
-          advisory_script_entrypoint_,                    //
-          DartIsolate::Flags{},                           //
-          isolate_create_callback_,                       //
-          isolate_shutdown_callback_,                     //
-          dart_entrypoint,                                //
-          dart_entrypoint_library,                        //
-          std::move(isolate_configuration)                //
-          )
-          .lock();
+  std::shared_ptr<DartIsolate> strong_root_isolate;
+  std::shared_ptr<DartIsolate> spawning_isolate = spawning_isolate_.lock();
+  if (spawning_isolate) {
+    strong_root_isolate =
+        spawning_isolate
+            ->SpawnIsolate(settings,                                       //
+                           std::make_unique<PlatformConfiguration>(this),  //
+                           snapshot_delegate_,                             //
+                           hint_freed_delegate_,                           //
+                           advisory_script_uri_,                           //
+                           advisory_script_entrypoint_,                    //
+                           DartIsolate::Flags{},                           //
+                           isolate_create_callback_,                       //
+                           isolate_shutdown_callback_,                     //
+                           dart_entrypoint,                                //
+                           dart_entrypoint_library,                        //
+                           std::move(isolate_configuration)                //
+                           )
+            .lock();
+  } else {
+    strong_root_isolate = DartIsolate::CreateRunningRootIsolate(
+                              settings,                                       //
+                              isolate_snapshot_,                              //
+                              task_runners_,                                  //
+                              std::make_unique<PlatformConfiguration>(this),  //
+                              snapshot_delegate_,                             //
+                              hint_freed_delegate_,                           //
+                              io_manager_,                                    //
+                              unref_queue_,                                   //
+                              image_decoder_,                                 //
+                              advisory_script_uri_,                           //
+                              advisory_script_entrypoint_,                    //
+                              DartIsolate::Flags{},                           //
+                              isolate_create_callback_,                       //
+                              isolate_shutdown_callback_,                     //
+                              dart_entrypoint,                                //
+                              dart_entrypoint_library,                        //
+                              std::move(isolate_configuration),               //
+                              nullptr                                         //
+                              )
+                              .lock();
+  }
 
   if (!strong_root_isolate) {
     FML_LOG(ERROR) << "Could not create root isolate.";

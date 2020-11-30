@@ -330,6 +330,12 @@ class Engine final : public RuntimeDelegate,
          fml::RefPtr<SkiaUnrefQueue> unref_queue,
          fml::WeakPtr<SnapshotDelegate> snapshot_delegate);
 
+  std::unique_ptr<Engine> Spawn(
+      Delegate& delegate,
+      const PointerDataDispatcherMaker& dispatcher_maker,
+      Settings settings,
+      std::unique_ptr<Animator> animator) const;
+
   //----------------------------------------------------------------------------
   /// @brief      Destroys the engine engine. Called by the shell on the UI task
   ///             runner. The running root isolate is terminated and will no

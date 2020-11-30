@@ -97,6 +97,19 @@ class Shell final : public PlatformView::Delegate,
  public:
   template <class T>
   using CreateCallback = std::function<std::unique_ptr<T>(Shell&)>;
+  typedef std::function<std::unique_ptr<Engine>(
+      Engine::Delegate& delegate,
+      const PointerDataDispatcherMaker& dispatcher_maker,
+      DartVM& vm,
+      fml::RefPtr<const DartSnapshot> isolate_snapshot,
+      TaskRunners task_runners,
+      const PlatformData platform_data,
+      Settings settings,
+      std::unique_ptr<Animator> animator,
+      fml::WeakPtr<IOManager> io_manager,
+      fml::RefPtr<SkiaUnrefQueue> unref_queue,
+      fml::WeakPtr<SnapshotDelegate> snapshot_delegate)>
+      EngineMaker;
 
   //----------------------------------------------------------------------------
   /// @brief      Creates a shell instance using the provided settings. The
@@ -212,6 +225,16 @@ class Shell final : public PlatformView::Delegate,
       const CreateCallback<Rasterizer>& on_create_rasterizer,
       DartVMRef vm);
 
+  static std::unique_ptr<Shell> Create(
+      TaskRunners task_runners,
+      const PlatformData platform_data,
+      Settings settings,
+      fml::RefPtr<const DartSnapshot> isolate_snapshot,
+      const CreateCallback<PlatformView>& on_create_platform_view,
+      const CreateCallback<Rasterizer>& on_create_rasterizer,
+      DartVMRef vm,
+      const EngineMaker& engine_maker);
+
   //----------------------------------------------------------------------------
   /// @brief      Destroys the shell. This is a synchronous operation and
   ///             synchronous barrier blocks are introduced on the various
@@ -223,7 +246,7 @@ class Shell final : public PlatformView::Delegate,
   std::unique_ptr<Shell> Spawn(
       Settings settings,
       const CreateCallback<PlatformView>& on_create_platform_view,
-      const CreateCallback<Rasterizer>& on_create_rasterizer);
+      const CreateCallback<Rasterizer>& on_create_rasterizer) const;
 
   //----------------------------------------------------------------------------
   /// @brief      Starts an isolate for the given RunConfiguration.
@@ -460,7 +483,8 @@ class Shell final : public PlatformView::Delegate,
       Settings settings,
       fml::RefPtr<const DartSnapshot> isolate_snapshot,
       const Shell::CreateCallback<PlatformView>& on_create_platform_view,
-      const Shell::CreateCallback<Rasterizer>& on_create_rasterizer);
+      const Shell::CreateCallback<Rasterizer>& on_create_rasterizer,
+      const EngineMaker& engine_maker);
 
   bool Setup(std::unique_ptr<PlatformView> platform_view,
              std::unique_ptr<Engine> engine,

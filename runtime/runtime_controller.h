@@ -128,6 +128,15 @@ class RuntimeController : public PlatformConfigurationClient {
       const fml::closure& isolate_shutdown_callback,
       std::shared_ptr<const fml::Mapping> persistent_isolate_data);
 
+  std::unique_ptr<RuntimeController> Spawn(
+      RuntimeDelegate& client,
+      std::string advisory_script_uri,
+      std::string advisory_script_entrypoint,
+      const std::function<void(int64_t)>& idle_notification_callback,
+      const fml::closure& isolate_create_callback,
+      const fml::closure& isolate_shutdown_callback,
+      std::shared_ptr<const fml::Mapping> persistent_isolate_data) const;
+
   // |PlatformConfigurationClient|
   ~RuntimeController() override;
 
@@ -473,6 +482,24 @@ class RuntimeController : public PlatformConfigurationClient {
   ///
   std::optional<uint32_t> GetRootIsolateReturnCode();
 
+  const fml::WeakPtr<IOManager>& GetIOManager() const { return io_manager_; }
+
+  DartVM* GetDartVM() const { return vm_; }
+
+  const fml::RefPtr<const DartSnapshot>& GetIsolateSnapshot() const {
+    return isolate_snapshot_;
+  }
+
+  const PlatformData& GetPlatformData() const { return platform_data_; }
+
+  const fml::RefPtr<SkiaUnrefQueue>& GetSkiaUnrefQueue() const {
+    return unref_queue_;
+  }
+
+  const fml::WeakPtr<SnapshotDelegate>& GetSnapshotDelegate() const {
+    return snapshot_delegate_;
+  }
+
  protected:
   /// Constructor for Mocks.
   RuntimeController(RuntimeDelegate& client, TaskRunners p_task_runners);
@@ -506,6 +533,7 @@ class RuntimeController : public PlatformConfigurationClient {
   std::function<void(int64_t)> idle_notification_callback_;
   PlatformData platform_data_;
   std::weak_ptr<DartIsolate> root_isolate_;
+  std::weak_ptr<DartIsolate> spawning_isolate_;
   std::optional<uint32_t> root_isolate_return_code_;
   const fml::closure isolate_create_callback_;
   const fml::closure isolate_shutdown_callback_;

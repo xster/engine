@@ -229,7 +229,22 @@ class DartIsolate : public UIDartState {
       const fml::closure& isolate_shutdown_callback,
       std::optional<std::string> dart_entrypoint,
       std::optional<std::string> dart_entrypoint_library,
-      std::unique_ptr<IsolateConfiguration> isolate_configration);
+      std::unique_ptr<IsolateConfiguration> isolate_configration,
+      const DartIsolate* spawning_isolate = nullptr);
+
+  std::weak_ptr<DartIsolate> SpawnIsolate(
+      const Settings& settings,
+      std::unique_ptr<PlatformConfiguration> platform_configuration,
+      fml::WeakPtr<SnapshotDelegate> snapshot_delegate,
+      fml::WeakPtr<HintFreedDelegate> hint_freed_delegate,
+      std::string advisory_script_uri,
+      std::string advisory_script_entrypoint,
+      Flags flags,
+      const fml::closure& isolate_create_callback,
+      const fml::closure& isolate_shutdown_callback,
+      std::optional<std::string> dart_entrypoint,
+      std::optional<std::string> dart_entrypoint_library,
+      std::unique_ptr<IsolateConfiguration> isolate_configration) const;
 
   // |UIDartState|
   ~DartIsolate() override;
@@ -419,7 +434,8 @@ class DartIsolate : public UIDartState {
       std::string advisory_script_entrypoint,
       Flags flags,
       const fml::closure& isolate_create_callback,
-      const fml::closure& isolate_shutdown_callback);
+      const fml::closure& isolate_shutdown_callback,
+      const DartIsolate* spawning_isolate = nullptr);
 
   DartIsolate(const Settings& settings,
               TaskRunners task_runners,
@@ -448,6 +464,8 @@ class DartIsolate : public UIDartState {
 
   DartIsolateGroupData& GetIsolateGroupData();
 
+  const DartIsolateGroupData& GetIsolateGroupData() const;
+
   // |Dart_IsolateGroupCreateCallback|
   static Dart_Isolate DartIsolateGroupCreateCallback(
       const char* advisory_script_uri,
@@ -472,7 +490,11 @@ class DartIsolate : public UIDartState {
       std::unique_ptr<std::shared_ptr<DartIsolateGroupData>> isolate_group_data,
       std::unique_ptr<std::shared_ptr<DartIsolate>> isolate_data,
       Dart_IsolateFlags* flags,
-      char** error);
+      char** error,
+      std::function<Dart_Isolate(std::shared_ptr<DartIsolateGroupData>*,
+                                 std::shared_ptr<DartIsolate>*,
+                                 Dart_IsolateFlags*,
+                                 char**)> make_isolate);
 
   static bool InitializeIsolate(std::shared_ptr<DartIsolate> embedder_isolate,
                                 Dart_Isolate isolate,
