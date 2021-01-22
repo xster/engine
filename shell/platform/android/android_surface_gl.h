@@ -18,7 +18,7 @@
 
 namespace flutter {
 
-class AndroidSurfaceGL final : public GPUSurfaceGLDelegate,
+class AndroidSurfaceGL : public GPUSurfaceGLDelegate,
                                public AndroidSurface {
  public:
   AndroidSurfaceGL(const std::shared_ptr<AndroidContext>& android_context,
